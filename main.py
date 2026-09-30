@@ -87,3 +87,43 @@ plt.ylabel('Position (m)')
 plt.legend()
 plt.grid(True)
 plt.show()
+
+# --- 9. EXTRAS: PARAMETER SENSITIVITY ANALYSIS ---
+def run_kf_with_custom_sz(sz_val):
+    x_sens = np.array([[0], [0]])
+    P_sens = np.array([[0, 0], [0, 0]])
+    estimates = []
+    for y_val in gps_measurements:
+        estimates.append(x_sens[0, 0])
+        K_sens = A @ P_sens @ C.T @ np.linalg.inv(C @ P_sens @ C.T + sz_val)
+        x_sens = A @ x_sens + B * u + K_sens @ (y_val - C @ x_sens)
+        P_sens = A @ P_sens @ A.T + Sw - A @ P_sens @ C.T @ np.linalg.inv(sz_val) @ C @ P_sens @ A.T
+    return estimates
+
+# Run simulations for extreme values
+est_sz_1 = run_kf_with_custom_sz(np.array([[1]]))
+est_sz_10k = run_kf_with_custom_sz(np.array([[10000]]))
+
+# Plot Sz = 1 (High Trust in GPS)
+plt.figure(figsize=(10, 6))
+plt.plot(gps_measurements[:200], label='GPS (Noisy)', color='green', alpha=0.5, linewidth=1)
+plt.plot(est_sz_1[:200], label='KF ($S_z = 1$: High Trust in GPS)', color='orange', linewidth=2)
+plt.title('Parameter Sensitivity: Overconfident Sensor ($S_z = 1$)')
+plt.xlabel('Time Step')
+plt.ylabel('Position (m)')
+plt.legend()
+plt.grid(True)
+plt.savefig('sensitivity_sz1.png', bbox_inches='tight')
+plt.show()
+
+# Plot Sz = 10000 (Low Trust in GPS)
+plt.figure(figsize=(10, 6))
+plt.plot(gps_measurements[:200], label='GPS (Noisy)', color='green', alpha=0.5, linewidth=1)
+plt.plot(est_sz_10k[:200], label='KF ($S_z = 10000$: Low Trust in GPS)', color='purple', linewidth=2)
+plt.title('Parameter Sensitivity: Underconfident Sensor ($S_z = 10000$)')
+plt.xlabel('Time Step')
+plt.ylabel('Position (m)')
+plt.legend()
+plt.grid(True)
+plt.savefig('sensitivity_sz10000.png', bbox_inches='tight')
+plt.show()
