@@ -31,8 +31,6 @@ kf_position_estimates = []
 
 # --- 4. Kalman Filter Loop ---
 for step, y in enumerate(gps_measurements):
-    kf_position_estimates.append(x[0, 0])
-
     # Compute Kalman Gain
     K = A @ P @ C.T @ np.linalg.inv(C @ P @ C.T + Sz)
 
@@ -41,6 +39,9 @@ for step, y in enumerate(gps_measurements):
 
     # Covariance update
     P = A @ P @ A.T + Sw - A @ P @ C.T @ np.linalg.inv(Sz) @ C @ P @ A.T
+
+    # Store corrected state at the end of the iteration
+    kf_position_estimates.append(x[0, 0])
 
 # --- 5. Verification ---
 df_results = pd.DataFrame({
