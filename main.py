@@ -1,6 +1,9 @@
+import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+
+os.makedirs('images', exist_ok=True)
 
 # --- 1. Load Data ---
 df = pd.read_excel('3 - KF Assignment 1 data.xlsx')
@@ -40,16 +43,20 @@ for step, y in enumerate(gps_measurements):
     # Covariance update
     P = A @ P @ A.T + Sw - A @ P @ C.T @ np.linalg.inv(Sz) @ C @ P @ A.T
 
-    # Store corrected state at the end of the iteration
-    kf_position_estimates.append(x[0, 0])
+    # Store corrected state rounded to 3 decimal places
+    kf_position_estimates.append(round(float(x[0, 0]), 3))
 
-# --- 5. Verification ---
+# --- 5. Verification & CSV Export ---
 df_results = pd.DataFrame({
-    'Our_KF': kf_position_estimates,
-    'Prof_KF': prof_reference
+    'Measured position data': gps_measurements,
+    'Corrected position data after KF': kf_position_estimates
 })
-df_results['Difference'] = df_results['Our_KF'] - df_results['Prof_KF']
-print("Max absolute difference:", df_results['Difference'].abs().max())
+
+# Verification of the maximum absolute difference against the professor's reference
+diff_check = np.abs(df_results['Corrected position data after KF'] - prof_reference)
+print("Max absolute difference:", diff_check.max())
+
+df_results.to_csv('kalman_filter_results.csv', index=False)
 
 # --- 6. General Plot ---
 plt.figure(figsize=(10, 6))
@@ -60,6 +67,7 @@ plt.xlabel('Time Step')
 plt.ylabel('Position (m)')
 plt.legend()
 plt.grid(True)
+plt.savefig('images/general_plot.png', bbox_inches='tight')
 plt.show()
 
 # --- 7. Simple Moving Average (SMA) Comparison ---
@@ -75,6 +83,7 @@ plt.xlabel('Time Step')
 plt.ylabel('Position (m)')
 plt.legend()
 plt.grid(True)
+plt.savefig('images/zoom_plot.png', bbox_inches='tight')
 plt.show()
 
 # --- 8. Startup Super Zoom ---
@@ -87,7 +96,9 @@ plt.xlabel('Time Step')
 plt.ylabel('Position (m)')
 plt.legend()
 plt.grid(True)
+plt.savefig('images/superzoom_plot.png', bbox_inches='tight')
 plt.show()
+
 
 # --- 9. EXTRAS: PARAMETER SENSITIVITY ANALYSIS ---
 def run_kf_with_custom_sz(sz_val):
@@ -95,17 +106,17 @@ def run_kf_with_custom_sz(sz_val):
     P_sens = np.array([[0, 0], [0, 0]])
     estimates = []
     for y_val in gps_measurements:
-        estimates.append(x_sens[0, 0])
         K_sens = A @ P_sens @ C.T @ np.linalg.inv(C @ P_sens @ C.T + sz_val)
         x_sens = A @ x_sens + B * u + K_sens @ (y_val - C @ x_sens)
         P_sens = A @ P_sens @ A.T + Sw - A @ P_sens @ C.T @ np.linalg.inv(sz_val) @ C @ P_sens @ A.T
+        estimates.append(round(float(x_sens[0, 0]), 3))
     return estimates
 
-# Run simulations for extreme values
+
 est_sz_1 = run_kf_with_custom_sz(np.array([[1]]))
 est_sz_10k = run_kf_with_custom_sz(np.array([[10000]]))
 
-# Plot Sz = 1 (High Trust in GPS)
+# Plot Sz = 1
 plt.figure(figsize=(10, 6))
 plt.plot(gps_measurements[:200], label='GPS (Noisy)', color='green', alpha=0.5, linewidth=1)
 plt.plot(est_sz_1[:200], label='KF ($S_z = 1$: High Trust in GPS)', color='orange', linewidth=2)
@@ -114,10 +125,10 @@ plt.xlabel('Time Step')
 plt.ylabel('Position (m)')
 plt.legend()
 plt.grid(True)
-plt.savefig('sensitivity_sz1.png', bbox_inches='tight')
+plt.savefig('images/sensitivity_sz1.png', bbox_inches='tight')
 plt.show()
 
-# Plot Sz = 10000 (Low Trust in GPS)
+# Plot Sz = 10000
 plt.figure(figsize=(10, 6))
 plt.plot(gps_measurements[:200], label='GPS (Noisy)', color='green', alpha=0.5, linewidth=1)
 plt.plot(est_sz_10k[:200], label='KF ($S_z = 10000$: Low Trust in GPS)', color='purple', linewidth=2)
@@ -126,5 +137,5 @@ plt.xlabel('Time Step')
 plt.ylabel('Position (m)')
 plt.legend()
 plt.grid(True)
-plt.savefig('sensitivity_sz10000.png', bbox_inches='tight')
+plt.savefig('images/sensitivity_sz10000.png', bbox_inches='tight')
 plt.show()
