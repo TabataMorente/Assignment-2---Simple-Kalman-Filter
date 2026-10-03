@@ -30,10 +30,12 @@ Sw = np.array([[1e-6, 2e-5],
 x = np.array([[0], [0]])  # Initial state [pos, vel]
 P = np.array([[0, 0], [0, 0]])  # Initial error covariance
 
-kf_position_estimates = []
+kf_position_estimates = [float(x[0,0])]
 
 # --- 4. Kalman Filter Loop ---
-for step, y in enumerate(gps_measurements):
+for step in range(len(gps_measurements)-1):
+    y= gps_measurements[step+1]
+
     # Compute Kalman Gain
     K = A @ P @ C.T @ np.linalg.inv(C @ P @ C.T + Sz)
 
@@ -44,7 +46,7 @@ for step, y in enumerate(gps_measurements):
     P = A @ P @ A.T + Sw - A @ P @ C.T @ np.linalg.inv(Sz) @ C @ P @ A.T
 
     # Store corrected state rounded to 3 decimal places
-    kf_position_estimates.append(round(float(x[0, 0]), 3))
+    kf_position_estimates.append(float(x[0, 0]))
 
 # --- 5. Verification & CSV Export ---
 df_results = pd.DataFrame({
@@ -104,7 +106,7 @@ plt.show()
 def run_kf_with_custom_sz(sz_val):
     x_sens = np.array([[0], [0]])
     P_sens = np.array([[0, 0], [0, 0]])
-    estimates = []
+    estimates = [float(x_sens[0,0])]
     for y_val in gps_measurements:
         K_sens = A @ P_sens @ C.T @ np.linalg.inv(C @ P_sens @ C.T + sz_val)
         x_sens = A @ x_sens + B * u + K_sens @ (y_val - C @ x_sens)
