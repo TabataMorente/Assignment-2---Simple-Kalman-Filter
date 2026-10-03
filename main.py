@@ -106,12 +106,15 @@ plt.show()
 def run_kf_with_custom_sz(sz_val):
     x_sens = np.array([[0], [0]])
     P_sens = np.array([[0, 0], [0, 0]])
-    estimates = [float(x_sens[0,0])]
-    for y_val in gps_measurements:
+    estimates = [float(x_sens[0, 0])]
+
+    for step in range(len(gps_measurements) - 1):
+        y_val = gps_measurements[step + 1]
         K_sens = A @ P_sens @ C.T @ np.linalg.inv(C @ P_sens @ C.T + sz_val)
         x_sens = A @ x_sens + B * u + K_sens @ (y_val - C @ x_sens)
         P_sens = A @ P_sens @ A.T + Sw - A @ P_sens @ C.T @ np.linalg.inv(sz_val) @ C @ P_sens @ A.T
-        estimates.append(round(float(x_sens[0, 0]), 3))
+        estimates.append(float(x_sens[0, 0]))  # Ponle el round() aquí si se lo pones al de arriba
+
     return estimates
 
 
