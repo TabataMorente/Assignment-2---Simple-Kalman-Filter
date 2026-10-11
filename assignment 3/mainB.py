@@ -4,23 +4,22 @@ import requests
 import time
 import matplotlib
 
-# ¡ESTA ES LA LÍNEA MÁGICA PARA ARREGLAR LAS DOS VENTANAS DE PYCHARM!
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
-# 1. LA IP DE TU MÓVIL (Tu IP actual)
+# 1. Your current IP from Phyphox
 URL = "http://10.171.158.219:8080/get?accX&accY&accZ&gyrX&gyrY&gyrZ"
 
-g = 9.81  # Gravedad en m/s^2
+g = 9.81  # Gravity in m/s^2
 
-# 2. INICIALIZACIÓN DE MATRICES
+# 2. MATRIX INITIALIZATION
 Q = np.eye(4) * 4.444e-5
 R = np.eye(4) * 0.088
 H = np.eye(4)
 x = np.array([[1.0], [0.0], [0.0], [0.0]])
 P = np.eye(4)
 
-# Configurar gráfica en tiempo real interactiva
+# COnfigure interactive real-time plot
 plt.ion()
 fig, ax = plt.subplots(figsize=(10, 6))
 line_roll, = ax.plot([], [], label='Roll (deg)', color='blue', linewidth=2)
@@ -40,7 +39,7 @@ last_time = start_time
 print("¡Conectando al móvil... Mueve la mano!")
 print("Presiona Ctrl+C en la terminal para parar el script.")
 
-# 3. EL BUCLE INFINITO
+# 3. INFINITE LOOP
 while True:
     try:
         response = requests.get(URL, timeout=1).json()
@@ -59,7 +58,7 @@ while True:
 
         last_time = current_time
 
-        # B. FILTRO DE KALMAN
+        # B. KALMAN FILTER
         Omega = np.array([
             [0, -p, -q_g, -r],
             [p, 0, r, -q_g],
@@ -92,12 +91,12 @@ while True:
 
         P = (np.eye(4) - K @ H) @ P_pred
 
-        # C. CONVERTIR A EULER PARA LA GRÁFICA
+        # C. CONVERT TO EULER FOR THE PLOTTING
         q1, q2, q3, q4 = x[0, 0], x[1, 0], x[2, 0], x[3, 0]
         roll_est = math.atan2(2 * (q1 * q2 + q3 * q4), 1 - 2 * (q2 ** 2 + q3 ** 2))
         pitch_est = math.asin(np.clip(2 * (q1 * q3 - q4 * q2), -1.0, 1.0))
 
-        # D. ACTUALIZAR LA GRÁFICA EN DIRECTO
+        # D. UPDATE LIVE PLOT
         t_elapsed = current_time - start_time
         roll_deg = math.degrees(roll_est)
         pitch_deg = math.degrees(pitch_est)
@@ -106,7 +105,7 @@ while True:
         roll_data.append(roll_deg)
         pitch_data.append(pitch_deg)
 
-        # ¡Imprimimos los datos en la terminal para confirmar que funciona!
+        # Print data to terminal to confirm it works
         print(f"Tiempo: {t_elapsed:.1f}s | Roll: {roll_deg:.1f}° | Pitch: {pitch_deg:.1f}°")
 
         if len(time_data) > 150:
@@ -119,12 +118,12 @@ while True:
 
         ax.set_xlim(time_data[0], time_data[-1] + 0.1)
 
-        # Forzamos el redibujado de la ventana
+        # Foce redraw of the window
         fig.canvas.draw()
         fig.canvas.flush_events()
 
     except KeyboardInterrupt:
-        print("¡Programa detenido!")
+        print("Program stopped")
         break
     except Exception as e:
         pass
