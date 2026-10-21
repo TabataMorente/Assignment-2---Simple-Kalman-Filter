@@ -2,6 +2,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.stats import anderson, shapiro
 
+# Ajustes de visualización de Pandas para evitar que se corten las columnas
+pd.set_option('display.max_columns', None)
+pd.set_option('display.width', 1000)
+
 # The 3 archives CSV with the data
 archives = ['datos_base.csv', 'datos_X.csv', 'datos_Y.csv']
 
