@@ -1,23 +1,22 @@
 import pandas as pd
 import numpy as np
 
-# Cargar datos
+# Load data
 df = pd.read_csv('datos_imu_spc.csv')
 df_spc = df.groupby('Subgrupo')['Accel_Z'].agg(X_bar='mean', S='std').reset_index()
 
-# 1. Parámetros de la calibración (Subgrupos 1 al 25)
+# 1. Calibration parameters (Subgroups 1 to 25)
 fase_base = df_spc[df_spc['Subgrupo'] <= 25]
 media_global = fase_base['X_bar'].mean()
 
-# Para n=10, la constante c4 es aprox 0.9727 para estimar sigma real
 c4 = 0.9727
 sigma_estimado = fase_base['S'].mean() / c4
 
-# 2. Definir LSL y USL (Media +- 5 veces la desviación estándar base)
+# 2. Define LSL and USL (Mean +- 5 times base SD)
 USL = media_global + (5 * sigma_estimado)
 LSL = media_global - (5 * sigma_estimado)
 
-print(f"Límites definidos: LSL = {LSL:.4f} | USL = {USL:.4f}\n")
+print(f"Defined limits: LSL = {LSL:.4f} | USL = {USL:.4f}\n")
 
 
 def calcular_capacidad(datos, nombre_fase):
@@ -34,8 +33,8 @@ def calcular_capacidad(datos, nombre_fase):
     print(f"Cpk = {Cpk:.3f}\n")
 
 
-# 3. Comparar las fases
-calcular_capacidad(fase_base, "Fase Base (Bajo Control)")
-# Separamos las perturbaciones (ajusta los números de subgrupo según los que hiciste)
-calcular_capacidad(df_spc[(df_spc['Subgrupo'] >= 26) & (df_spc['Subgrupo'] <= 35)], "Perturbación: Inclinación")
-calcular_capacidad(df_spc[df_spc['Subgrupo'] >= 36], "Perturbación: Vibración")
+# 3. Compare phases
+calcular_capacidad(fase_base, "Base phase (Under Control)")
+# Separate perturbations
+calcular_capacidad(df_spc[(df_spc['Subgrupo'] >= 26) & (df_spc['Subgrupo'] <= 35)], "Perturbation: Tilt")
+calcular_capacidad(df_spc[df_spc['Subgrupo'] >= 36], "Perturbation: Vibration")
