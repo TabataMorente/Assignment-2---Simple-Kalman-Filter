@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # ==========================================
-# 1. CARGAR DATOS Y CALCULAR MÉTRICAS
+# 1. LOAD DATA AND CALCULATE METRICS
 # ==========================================
 # Cargar el CSV
 df = pd.read_csv('datos_imu_spc.csv')
@@ -16,34 +16,34 @@ df_spc = df.groupby('Subgrupo')['Accel_Z'].agg(
 ).reset_index()
 
 # ==========================================
-# 2. CONSTANTES ESTADÍSTICAS PARA n = 10
+# 2. STATISTIC CONSTANTS FOR n = 10
 # ==========================================
 n = 10
-A2 = 0.308  # Para límites de X-bar usando R
-A3 = 0.975  # Para límites de X-bar usando S
-D3 = 0.223  # Para límite inferior de R
-D4 = 1.777  # Para límite superior de R
-B3 = 0.284  # Para límite inferior de S
-B4 = 1.716  # Para límite superior de S
+A2 = 0.308  # For X-bar limits using R
+A3 = 0.975  # For X-bar limits using S
+D3 = 0.223  # For lower limit of R
+D4 = 1.777  # For upper limit of R
+B3 = 0.284  # For lower limit of S
+B4 = 1.716  # For upper limit of S
 
 # ==========================================
-# 3. CALCULAR LÍMITES SOLO CON LA FASE BASE (1 al 25)
+# 3. CALCULATE LIMITS WITH ONLY BASE LINE (1 to 25)
 # ==========================================
 fase_base = df_spc[df_spc['Subgrupo'] <= 25]
 
-# Líneas Centrales (Medias de las métricas de la fase base)
+# Central lines (Means of base line metrics)
 X_dbl_bar = fase_base['X_bar'].mean()
 R_bar = fase_base['R'].mean()
 S_bar = fase_base['S'].mean()
 
-# Límites de Control X-bar (usando el rango)
+# X-bar Control limits (using range)
 UCL_X = X_dbl_bar + (A2 * R_bar)
 LCL_X = X_dbl_bar - (A2 * R_bar)
 
-# Calcular el ancho de 1 sigma para pintar las zonas (A, B, C) de las reglas
+# Calculate the width of 1 sigma for drawing zones A, B and C of the rules
 sigma_X = (UCL_X - X_dbl_bar) / 3
 
-# Límites de Control R y S
+# R and S control limits
 UCL_R = D4 * R_bar
 LCL_R = D3 * R_bar
 UCL_S = B4 * S_bar
@@ -51,26 +51,26 @@ LCL_S = B3 * S_bar
 
 
 # ==========================================
-# 4. FUNCIÓN PARA DIBUJAR LOS GRÁFICOS
+# 4. FUNCTION FOR DRAWING GRAPHS
 # ==========================================
 def plot_chart(ax, data, CL, UCL, LCL, title, ylabel, sigma=None):
     ax.plot(df_spc['Subgrupo'], data, marker='o', color='blue', linestyle='-', markersize=6)
 
-    # Línea central y límites de control
-    ax.axhline(CL, color='green', linestyle='-', linewidth=2, label='Centro (CL)')
-    ax.axhline(UCL, color='red', linestyle='--', linewidth=2, label='Límites (UCL/LCL)')
+    # Central line y control limits
+    ax.axhline(CL, color='green', linestyle='-', linewidth=2, label='Center (CL)')
+    ax.axhline(UCL, color='red', linestyle='--', linewidth=2, label='Limits (UCL/LCL)')
     ax.axhline(LCL, color='red', linestyle='--', linewidth=2)
 
-    # Dibujar zonas (solo para X-bar) para ver el "Flagging"
+    # Draw zones (just for X-bar) in order to see the "Flagging"
     if sigma is not None:
-        ax.axhspan(CL - sigma, CL + sigma, color='green', alpha=0.2, label='Zona C')
-        ax.axhspan(CL + sigma, CL + 2 * sigma, color='yellow', alpha=0.2, label='Zona B')
+        ax.axhspan(CL - sigma, CL + sigma, color='green', alpha=0.2, label='C Zone')
+        ax.axhspan(CL + sigma, CL + 2 * sigma, color='yellow', alpha=0.2, label='B Zone')
         ax.axhspan(CL - 2 * sigma, CL - sigma, color='yellow', alpha=0.2)
-        ax.axhspan(CL + 2 * sigma, UCL, color='red', alpha=0.2, label='Zona A')
+        ax.axhspan(CL + 2 * sigma, UCL, color='red', alpha=0.2, label='A Zone')
         ax.axhspan(LCL, CL - 2 * sigma, color='red', alpha=0.2)
 
-    # Sombrear la zona de perturbación (Subgrupos > 25)
-    ax.axvspan(25.5, 40.5, color='gray', alpha=0.1, label='Fase Perturbación')
+    # Other color for perturbation zone (Subgroups > 25)
+    ax.axvspan(25.5, 40.5, color='gray', alpha=0.1, label='Perturbation zone')
     ax.axvline(25.5, color='black', linestyle=':', linewidth=2)
 
     ax.set_title(title, fontsize=14, fontweight='bold')
@@ -80,26 +80,26 @@ def plot_chart(ax, data, CL, UCL, LCL, title, ylabel, sigma=None):
 
 
 # ==========================================
-# 5. CREAR LA FIGURA COMPLETA
+# 5. CREATE COMPLETE FIGURE
 # ==========================================
 fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 16), sharex=True)
 
-# Gráfico X-bar
+# X-bar chart
 plot_chart(ax1, df_spc['X_bar'], X_dbl_bar, UCL_X, LCL_X,
-           'Gráfico de Medias (X-bar)', 'Media Accel_Z', sigma=sigma_X)
+           'Mean chart (X-bar)', 'Accel_Z Mean', sigma=sigma_X)
 
-# Gráfico R
+# R chart
 plot_chart(ax2, df_spc['R'], R_bar, UCL_R, LCL_R,
-           'Gráfico de Rangos (R)', 'Rango Accel_Z')
+           'Range chart (R)', 'Accel_Z Range')
 
-# Gráfico S
+# S chart
 plot_chart(ax3, df_spc['S'], S_bar, UCL_S, LCL_S,
-           'Gráfico de Desviación Estándar (S)', 'Desviación Estándar Accel_Z')
+           'Standard Deviation chart (S)', 'Accel_Z Standard Deviation')
 
-ax3.set_xlabel('Número de Subgrupo', fontsize=12)
-plt.xticks(range(1, 41))  # Mostrar números del 1 al 40 en el eje X
+ax3.set_xlabel('Subgroup number', fontsize=12)
+plt.xticks(range(1, 41))
 plt.tight_layout()
 
-# Guardar la imagen para ponerla en tu Word
+# Save img
 plt.savefig('graficos_spc_imu.png', dpi=300)
 plt.show()
